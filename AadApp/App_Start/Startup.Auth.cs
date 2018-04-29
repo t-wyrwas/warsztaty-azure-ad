@@ -39,7 +39,8 @@ namespace AadApp
                     ClientId = clientId,
                     Authority = Authority,
                     PostLogoutRedirectUri = postLogoutRedirectUri,
-                    AuthenticationMode = AuthenticationMode.Active,
+                    AuthenticationMode = AuthenticationMode.Passive,
+                    AuthenticationType = tenantId,
 
                     Notifications = new OpenIdConnectAuthenticationNotifications()
                     {
