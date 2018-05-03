@@ -40,7 +40,6 @@ namespace AadApp.Controllers
         {
             if (Request.IsAuthenticated)
             {
-                // Redirect to home page if the user is authenticated.
                 return RedirectToAction("Index", "Home");
             }
 
