@@ -41,14 +41,27 @@ namespace AadApp
                     PostLogoutRedirectUri = postLogoutRedirectUri,
                     AuthenticationMode = AuthenticationMode.Passive,
                     AuthenticationType = tenantId,
-
+                    //Scope = "openid profile email",
+                    
                     Notifications = new OpenIdConnectAuthenticationNotifications()
                     {
                         // If there is a code in the OpenID Connect response, redeem it for an access token and refresh token, and store those away.
                         AuthorizationCodeReceived = async (context) =>
                         {
                             await AuthCodeReceivedCallback(context, graphResourceId);
+                        },
+
+                        SecurityTokenValidated = (context) =>
+                        {
+                            var identity = context.AuthenticationTicket.Identity;
+                            var userNameClaim = identity.FindFirst(ClaimTypes.Name);
+                            var userName = userNameClaim.Value;
+
+                            // todo: zrob cos w oparciu o dane z tokena, np. sprawdz czy uzytkownik o danym userName/email ma pozwolenie na dostęp do aplikacji
+
+                            return Task.FromResult(0);
                         }
+                        
                     }
                 });
         }

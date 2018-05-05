@@ -1,12 +1,10 @@
-﻿using System;
-using System.Configuration;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Configuration;
 using System.Web;
 using System.Web.Mvc;
+using System.IdentityModel.Claims;
 using Microsoft.Owin.Security.Cookies;
-using Microsoft.Owin.Security.OpenIdConnect;
 using Microsoft.Owin.Security;
+using AadApp.ViewModels;
 
 namespace AadApp.Controllers
 {
@@ -22,7 +20,14 @@ namespace AadApp.Controllers
         [HttpGet]
         public ActionResult UserDetails()
         {
-            return View();
+            var user = HttpContext.GetOwinContext().Authentication.User;
+
+            return View(new UserDetails
+            {
+                UserName = user.FindFirst(ClaimTypes.Name)?.Value,
+                FirstName = user.FindFirst(ClaimTypes.GivenName)?.Value,
+                LastName = user.FindFirst(ClaimTypes.Surname)?.Value,
+            });
         }
 
         public ActionResult SignOut()

@@ -1,4 +1,6 @@
-﻿@{
+﻿@using AadApp.ViewModels
+@model UserDetails
+@{
     ViewBag.Title = "User details";
 }
 <h2>@ViewBag.Title.</h2>
@@ -6,3 +8,21 @@
 
 <p>This is only visible for authenticated user</p>
 
+<div class="container">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Firstname</th>
+                <th>Lastname</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>@Model.FirstName</td>
+                <td>@Model.LastName</td>
+                <td>@Model.UserName</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
