@@ -12,31 +12,20 @@ namespace AadApp.Controllers
     {
         public void Login()
         {
-            HttpContext.GetOwinContext().Authentication.Challenge(new AuthenticationProperties { RedirectUri = "/" }, 
-                ConfigurationManager.AppSettings["ida:TenantId"]);
+            //todo
         }
 
         [Authorize]
         [HttpGet]
         public ActionResult UserDetails()
         {
-            var user = HttpContext.GetOwinContext().Authentication.User;
-
-            return View(new UserDetails
-            {
-                UserName = user.FindFirst(ClaimTypes.Name)?.Value,
-                FirstName = user.FindFirst(ClaimTypes.GivenName)?.Value,
-                LastName = user.FindFirst(ClaimTypes.Surname)?.Value,
-            });
+            //todo
+            return View();
         }
 
         public ActionResult SignOut()
         {
-            string callbackUrl = Url.Action("SignOutCallback", "Account", routeValues: null, protocol: Request.Url.Scheme);
-
-            HttpContext.GetOwinContext().Authentication.SignOut(
-                new AuthenticationProperties { RedirectUri = callbackUrl },
-                CookieAuthenticationDefaults.AuthenticationType);
+            //todo
 
             return Redirect("SignOutCallback");
         }
