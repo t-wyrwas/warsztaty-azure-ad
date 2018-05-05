@@ -1,7 +1,12 @@
-﻿using System.Configuration;
+﻿using System;
+using System.Configuration;
 using System.Web;
 using System.Web.Mvc;
+using System.Threading.Tasks;
 using System.IdentityModel.Claims;
+using System.Linq;
+using Microsoft.Azure.ActiveDirectory.GraphClient;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Owin.Security.Cookies;
 using Microsoft.Owin.Security;
 using AadApp.ViewModels;
@@ -10,6 +15,8 @@ namespace AadApp.Controllers
 {
     public class AccountController : Controller
     {
+        private string graphResourceID = "https://graph.windows.net"; // AAD Graph, nie Microsoft Graph
+
         public void Login()
         {
             HttpContext.GetOwinContext().Authentication.Challenge(new AuthenticationProperties { RedirectUri = "/" }, 
@@ -18,16 +25,40 @@ namespace AadApp.Controllers
 
         [Authorize]
         [HttpGet]
-        public ActionResult UserDetails()
+        public async Task<ActionResult> UserDetails()
         {
-            var user = HttpContext.GetOwinContext().Authentication.User;
+            var principal = HttpContext.GetOwinContext().Authentication.User;
 
-            return View(new UserDetails
+            string tenantId = ConfigurationManager.AppSettings["ida:TenantId"];
+
+            try
             {
-                UserName = user.FindFirst(ClaimTypes.Name)?.Value,
-                FirstName = user.FindFirst(ClaimTypes.GivenName)?.Value,
-                LastName = user.FindFirst(ClaimTypes.Surname)?.Value,
-            });
+                Uri servicePointUri = new Uri(graphResourceID);
+                Uri serviceRoot = new Uri(servicePointUri, tenantId);
+                ActiveDirectoryClient activeDirectoryClient = new ActiveDirectoryClient(serviceRoot,
+                      async () => await GetTokenForApplication());
+
+                var result = await activeDirectoryClient.Users.ExecuteAsync();
+
+                var users = result.CurrentPage.Select(u => new UserDetails
+                {
+                    UserName = u.UserPrincipalName,
+                    FirstName = u.GivenName,
+                    LastName = u.Surname
+                }).ToList();
+
+                return View(users);
+            }
+            catch (AdalException e)
+            {
+                return View("Error");
+            }
+            catch (Exception e)
+            {
+                return View("Relogin");
+            }
+
+
         }
 
         public ActionResult SignOut()
@@ -49,6 +80,26 @@ namespace AadApp.Controllers
             }
 
             return View();
+        }
+
+        public async Task<string> GetTokenForApplication()
+        {
+            var principal = HttpContext.GetOwinContext().Authentication.User;
+
+            var signedInUserID = principal.FindFirst(ClaimTypes.NameIdentifier).Value;
+            var userObjectID = principal.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier").Value;
+            var clientId = ConfigurationManager.AppSettings["ida:ClientId"];
+            var clientSecret = ConfigurationManager.AppSettings["ida:ClientSecret"];
+            var aadInstance = ConfigurationManager.AppSettings["ida:AADInstance"];
+            var tenantID = ConfigurationManager.AppSettings["ida:TenantId"];
+
+            // get a token for the Graph without triggering any user interaction (from the cache, via multi-resource refresh token, etc)
+            ClientCredential clientcred = new ClientCredential(clientId, clientSecret);
+            // initialize AuthenticationContext with the token cache of the currently signed in user, as kept in the app's database
+            AuthenticationContext authenticationContext = new AuthenticationContext(aadInstance + tenantID);
+            //AuthenticationResult authenticationResult = await authenticationContext.AcquireTokenSilentAsync(graphResourceID, clientcred, new UserIdentifier(userObjectID, UserIdentifierType.UniqueId));
+            AuthenticationResult authenticationResult = await authenticationContext.AcquireTokenAsync(graphResourceID, clientcred);
+            return authenticationResult.AccessToken;
         }
     }
 }

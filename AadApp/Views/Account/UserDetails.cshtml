@@ -1,5 +1,5 @@
 ﻿@using AadApp.ViewModels
-@model UserDetails
+@model List<UserDetails>
 @{
     ViewBag.Title = "User details";
 }
@@ -7,6 +7,7 @@
 <h3>@ViewBag.Message</h3>
 
 <p>This is only visible for authenticated user</p>
+<p>Number of users in the AAD tenant: @Model.Count</p>
 
 <div class="container">
     <table class="table table-hover">
@@ -17,12 +18,15 @@
                 <th>Email</th>
             </tr>
         </thead>
+    @foreach(var user in Model)
+    {
         <tbody>
             <tr>
-                <td>@Model.FirstName</td>
-                <td>@Model.LastName</td>
-                <td>@Model.UserName</td>
+                <td>@user.FirstName</td>
+                <td>@user.LastName</td>
+                <td>@user.UserName</td>
             </tr>
         </tbody>
+    }
     </table>
 </div>
